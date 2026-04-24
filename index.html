@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routine Optimized</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+body { margin:0; font-family:'Poppins',sans-serif; background:#0b0d17; color:#e0e0ff; }
+.container { display:flex; }
+.sidebar { width:300px; padding:20px; background:#11142a; }
+.card { background:linear-gradient(135deg,#5c4bff,#8a6bff); padding:20px; border-radius:16px; text-align:center; margin-bottom:20px; }
+.streak { font-size:42px; margin:10px 0; }
+.small-card { background:#1b1f3a; padding:15px; border-radius:12px; margin-bottom:10px; }
+.calendar { background:#1b1f3a; padding:15px; border-radius:12px; }
+.calendar input { width:100%; padding:8px; border-radius:8px; border:none; }
+.main { flex:1; padding:30px; }
+.header { text-align:center; margin-bottom:20px; }
+.header h1 { color:#a58bff; }
+.table { background:#11142a; border-radius:16px; padding:20px; }
+table { width:100%; border-collapse:collapse; }
+th,td { padding:12px; border-bottom:1px solid #2a2e55; }
+tr:hover { background:#1a1f44; }
+button { margin-top:20px; width:100%; padding:15px; border-radius:10px; border:none; background:#5c6cff; color:white; font-size:16px; cursor:pointer; }
+button:hover { background:#7a86ff; }
+input[type="checkbox"] { transform:scale(1.3); }
+.footer { margin-top:20px; text-align:center; font-size:12px; color:#666; }
+.status { margin-top:10px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="sidebar">
+    <div class="card">
+      <h3>🔥 STREAK</h3>
+      <div class="streak" id="streak">0</div>
+    </div>
+
+    <div class="calendar">
+      <label>Select Date</label>
+      <input type="date" id="datePicker">
+      <div class="status" id="dayStatus"></div>
+    </div>
+
+    <div class="small-card"><b>Longest:</b> <span id="longest">0</span></div>
+    <div class="small-card"><b>Total Days:</b> <span id="total">0</span></div>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      <h1>ROUTINE (Optimized)</h1>
+      <p>Balanced • Productive • Sustainable</p>
+    </div>
+
+    <div class="table">
+      <table>
+        <tr><th>Time</th><th>Activity</th><th>Done</th></tr>
+
+        <tr><td>7:00 - 8:00</td><td>Gym(1hr)💪</td><td><input type="checkbox" class="task"></td></tr>
+        <tr><td>8:00 - 9:00</td><td>Bath & Puja 🪷</td><td><input type="checkbox" class="task"></td></tr>
+        <tr><td>9:00 - 12:00</td><td>Deep Study(Personal) 📘</td><td><input type="checkbox" class="task"></td></tr>
+        <tr><td>12:00 - 12:30</td><td>Lunch 💻</td><td><input type="checkbox" class="task"></td></tr>
+        <tr><td>12.30 - 7:30</td><td>Office 📁</td><td><input type="checkbox" class="task"></td></tr>
+        <tr><td>7:30 - 8:30</td><td>Walk(10k) 📝</td><td><input type="checkbox" class="task"></td></tr>
+        <tr><td>8.30 - 10:00</td><td>Dinner/Study personal(leetcode System design) 🧘</td><td><input type="checkbox" class="task"></td></tr>
+        <tr><td>11:00 - 12:00</td><td>Sleep Prep/Plan for next Day/Meditation 🌙</td><td><input type="checkbox" class="task"></td></tr>
+      </table>
+
+      <button onclick="completeDay()">Save Day ✅</button>
+    </div>
+
+    <div class="footer">Stay consistent, not perfect.</div>
+  </div>
+</div>
+
+<script>
+const datePicker = document.getElementById('datePicker');
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getKey(date) { return 'tasks-' + date; }
+function getMetaKey(date) { return 'meta-' + date; }
+
+function loadStats() {
+  document.getElementById('streak').innerText = localStorage.getItem('streak') || 0;
+  document.getElementById('longest').innerText = localStorage.getItem('longest') || 0;
+  document.getElementById('total').innerText = localStorage.getItem('total') || 0;
+}
+
+function loadTasks(date) {
+  const data = JSON.parse(localStorage.getItem(getKey(date)) || '[]');
+  document.querySelectorAll('.task').forEach((cb, i) => {
+    cb.checked = data[i] || false;
+  });
+
+  const meta = JSON.parse(localStorage.getItem(getMetaKey(date)) || '{}');
+  const statusEl = document.getElementById('dayStatus');
+  if (meta.completed === true) statusEl.innerText = '✅ Completed Day';
+  else if (meta.completed === false) statusEl.innerText = '⚠️ Incomplete Day';
+  else statusEl.innerText = '';
+}
+
+function saveTasks(date) {
+  const arr = [];
+  document.querySelectorAll('.task').forEach(cb => arr.push(cb.checked));
+  localStorage.setItem(getKey(date), JSON.stringify(arr));
+}
+
+function completeDay() {
+  const date = datePicker.value;
+  const tasks = document.querySelectorAll('.task');
+
+  let allDone = true;
+  tasks.forEach(t => { if (!t.checked) allDone = false; });
+
+  saveTasks(date);
+
+  // store completion status per day
+  localStorage.setItem(getMetaKey(date), JSON.stringify({ completed: allDone }));
+
+  if (!allDone) {
+    loadTasks(date);
+    alert('Saved, but not all tasks completed → streak not updated');
+    return;
+  }
+
+  let last = localStorage.getItem('last');
+  let streak = parseInt(localStorage.getItem('streak') || 0);
+  let total = parseInt(localStorage.getItem('total') || 0);
+  let longest = parseInt(localStorage.getItem('longest') || 0);
+
+  if (last) {
+    let diff = (new Date(date) - new Date(last)) / (1000*60*60*24);
+    if (diff === 1) streak++;
+    else if (diff > 1) streak = 1;
+  } else {
+    streak = 1;
+  }
+
+  total++;
+  if (streak > longest) longest = streak;
+
+  localStorage.setItem('streak', streak);
+  localStorage.setItem('last', date);
+  localStorage.setItem('total', total);
+  localStorage.setItem('longest', longest);
+
+  loadStats();
+  loadTasks(date);
+}
+
+// init
+const todayDate = today();
+datePicker.value = todayDate;
+
+loadStats();
+loadTasks(todayDate);
+
+// change date handler
+datePicker.addEventListener('change', () => {
+  loadTasks(datePicker.value);
+});
+
+// autosave
+document.querySelectorAll('.task').forEach(cb => {
+  cb.addEventListener('change', () => {
+    saveTasks(datePicker.value);
+  });
+});
+</script>
+</body>
+</html>
